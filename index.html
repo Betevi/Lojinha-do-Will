@@ -6,7 +6,6 @@
     <meta name="Author" content="Maria Clara e Elizabete">
     <meta name="description" content="Lojinha online para venda de Mangás e Acessórios">
     <link rel="stylesheet" href="style-mang.css">
-    <script src="index.js"></script>
     <title>Lojinha do Will</title>
 </head>
 <body>
@@ -17,7 +16,9 @@
             <a href="mangas.html">Mangás</a> 
             <a href="roupas.html">Roupas e Acessórios</a>
             <div class="cadastro"> 
-                <button class="navbar"><a href="carrinho.html">Carrinho</a></button>
+                <div class="carrinho-icon" id="abrir-carrinho">
+                    🛒 <span class="carrinho-count" id="contador-carrinho">0</span>
+                </div>
                 <button class="navbar"><a href="cadastro.html">Cadastre-se</a></button>
             </div>
             <input type="search" id="barra-pesquisa" placeholder="Pesquisar" oninput="filtrarProdutos()">
@@ -27,7 +28,6 @@
     <h1>Mangás</h1>
 
     <section id="produtos" class="vitrine">
-      
         <div class="produto" data-nome="Jujutsu Kaisen Vol. 1" data-preco="34.75">
             <fieldset>
                 <img src="img/61ResbP4aPL._SY385_.jpg" alt="Jujutsu Kaisen Vol.1">
@@ -37,7 +37,6 @@
             </fieldset>
         </div>
 
-        
         <div class="produto" data-nome="O cara que estou a fim não é um cara?! - Vol.1" data-preco="30.70">
             <fieldset>
                 <img src="img/o cara.jpg" alt="O cara que estou a fim não é um cara?! - Volume 1" style="width: 65px;">
@@ -47,7 +46,6 @@
             </fieldset>
         </div>
 
-        
         <div class="produto" data-nome="Your name" data-preco="42.50">
             <fieldset> 
                 <img src="img/yourname.jpg" alt="Your name">
@@ -57,7 +55,6 @@
             </fieldset>
         </div>
 
-        
         <div class="produto" data-nome="Box: Attack on Titan Season 1" data-preco="261.40">
             <fieldset> 
                 <img src="img/aot.jpg" alt="Box: Attack on Titan Season 1">
@@ -69,7 +66,6 @@
     </section>
 
     <section id="produtos" class="vitrine">
-       
         <div class="produto" data-nome="Demon Slayer Vol.8" data-preco="24.72">
             <fieldset>
                 <img src="img/demon slayer.jpg" alt="Demon Slayer Vol. 8">
@@ -79,7 +75,6 @@
             </fieldset>
         </div>
 
-        
         <div class="produto" data-nome="Boku no Hero - Volume 2" data-preco="25.43">
             <fieldset>
                 <img src="img/boku.jpg" alt="Boku no Hero - Volume 2">
@@ -89,7 +84,6 @@
             </fieldset>
         </div>
 
-        
         <div class="produto" data-nome="Hunter X Hunter - Vol. 1" data-preco="35.10">
             <fieldset> 
                 <img src="img/Hunter X Hunter - Vol. 1.jpg" alt="Hunter X Hunter - Vol. 1">
@@ -99,7 +93,6 @@
             </fieldset>
         </div>
 
-       
         <div class="produto" data-nome="Tokyo Revengers Vol. 1" data-preco="20.34">
             <fieldset> 
                 <img src="img/Tokyo Revengers.jpg" alt="Tokyo Revengers Vol. 1">
@@ -110,14 +103,21 @@
         </div>
     </section>
 
-    <section>
-        <h1>Carrinho de Compras</h1>
-        <div id="carrinho"></div>
-        <ul id="lista-carrinho"></ul>
-        <p>Total: R$ <span id="total">0.00</span></p>
-        <button id="limpar-carrinho">Limpar Carrinho</button> 
-        <button id="finalizar-compra"> Finalizar Compras</button>
-    </section>
+    
+    <div id="carrinho-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Carrinho de Compras</h2>
+            <ul id="lista-carrinho"></ul>
+            <div class="total-container">
+                Total: R$ <span id="total">0.00</span>
+            </div>
+            <div class="carrinho-botoes">
+                <button id="limpar-carrinho">Limpar Carrinho</button> 
+                <button id="finalizar-compra">Finalizar Compras</button>
+            </div>
+        </div>
+    </div>
 
     <footer>
         <p>&copy; 2025 Lojinha Geek - Criado com carinho por Elizabete e Maria Clara. Todos os direitos reservados.</p>
@@ -131,38 +131,91 @@
             const totalElemento = document.getElementById("total");
             const botaoLimpar = document.getElementById("limpar-carrinho");
             const botaoFinalizarCompra = document.getElementById("finalizar-compra");
+            const modal = document.getElementById("carrinho-modal");
+            const abrirCarrinho = document.getElementById("abrir-carrinho");
+            const closeBtn = document.querySelector(".close");
+            const contadorCarrinho = document.getElementById("contador-carrinho");
+            
+            let carrinho = [];
             let total = 0;
 
+            
+            abrirCarrinho.addEventListener("click", () => {
+                modal.style.display = "block";
+            });
+
            
+            closeBtn.addEventListener("click", () => {
+                modal.style.display = "none";
+            });
+
+           
+            window.addEventListener("click", (event) => {
+                if (event.target === modal) {
+                    modal.style.display = "none";
+                }
+            });
+
+            
             botoesAdicionar.forEach(botao => {
                 botao.addEventListener("click", () => {
-                    const nome = botao.closest(".produto").getAttribute("data-nome");
-                    const preco = parseFloat(botao.closest(".produto").getAttribute("data-preco"));
-
-                   
-                    const item = document.createElement("li");
-                    item.textContent = `${nome} - R$ ${preco.toFixed(2)}`;
-                    listaCarrinho.appendChild(item);
-
-                   
+                    const produto = botao.closest(".produto");
+                    const nome = produto.getAttribute("data-nome");
+                    const preco = parseFloat(produto.getAttribute("data-preco"));
+                    
+                    
+                    carrinho.push({ nome, preco });
                     total += preco;
-                    totalElemento.textContent = total.toFixed(2);
+                    
+                    
+                    contadorCarrinho.textContent = carrinho.length;
+                    
+                   
+                    atualizarCarrinho();
+                    
+                   
+                    botao.textContent = "✔ Adicionado";
+                    setTimeout(() => {
+                        botao.textContent = "Adicionar ao carrinho";
+                    }, 1000);
                 });
             });
 
-            botaoLimpar.addEventListener("click", () => {
+            
+            function atualizarCarrinho() {
                 listaCarrinho.innerHTML = "";
                 total = 0;
-                totalElemento.textContent = "0.00";
+                
+                carrinho.forEach(item => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `
+                        <span>${item.nome}</span>
+                        <span>R$ ${item.preco.toFixed(2)}</span>
+                    `;
+                    listaCarrinho.appendChild(li);
+                    total += item.preco;
+                });
+                
+                totalElemento.textContent = total.toFixed(2);
+            }
+
+            
+            botaoLimpar.addEventListener("click", () => {
+                carrinho = [];
+                total = 0;
+                contadorCarrinho.textContent = "0";
+                atualizarCarrinho();
             });
 
-          
+            
             botaoFinalizarCompra.addEventListener("click", () => {
-                if (total > 0) {
-                    alert(`Compra finalizada! Total a pagar: R$ ${total.toFixed(2)}`);
-                    listaCarrinho.innerHTML = "";
+                if (carrinho.length > 0) {
+                    alert(`Compra finalizada! Total: R$ ${total.toFixed(2)}\nObrigado por comprar conosco!`);
+                    carrinho = [];
                     total = 0;
-                    totalElemento.textContent = "0.00";
+                    contadorCarrinho.textContent = "0";
+                    atualizarCarrinho();
+                    modal.style.display = "none";
                 } else {
                     alert("Seu carrinho está vazio. Adicione itens para finalizar a compra.");
                 }

@@ -6,8 +6,8 @@
     <meta name="Author" content="Maria Clara e Elizabete">
     <meta name="description" content="Lojinha online para venda de Mangás e Acessórios">
     <link rel="stylesheet" href="style.css">
-    <script src="index.js" defer></script>
     <title>Lojinha Geek - Roupas e Acessórios</title>
+   
 </head>
 <body>
     <header>
@@ -18,6 +18,9 @@
             <a href="roupas.html">Roupas e Acessórios</a>
             <div class="cadastro"> 
                 <button class="navbar"><a href="cadastro.html">Cadastre-se</a></button>
+            </div>
+            <div class="carrinho-container">
+                <button id="carrinho-icon">🛒 <span id="contador-carrinho">0</span></button>
             </div>
             <input type="search" id="barra-pesquisa" placeholder="Pesquisar" oninput="filtrarProdutos()">
         </nav>
@@ -63,65 +66,150 @@
         </div>
     </section>
 
-    <section>
-        <h1>Carrinho de Compras</h1>
-        <div id="carrinho"></div>
-        <ul id="lista-carrinho"></ul> 
-        <p>Total: R$ <span id="total">0.00</span></p>
-        <button id="limpar-carrinho">Limpar Carrinho</button> 
-        <button id="finalizar-compra">Finalizar Compras</button> 
-    </section>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const botoesAdicionar = document.querySelectorAll(".adicionar");
-            const listaCarrinho = document.getElementById("lista-carrinho");
-            const totalElemento = document.getElementById("total");
-            const botaoLimpar = document.getElementById("limpar-carrinho");
-            const botaoFinalizarCompra = document.getElementById("finalizar-compra");
-            let total = 0;
-
-            
-            botoesAdicionar.forEach(botao => {
-                botao.addEventListener("click", () => {
-                    const nome = botao.getAttribute("data-nome");
-                    const preco = parseFloat(botao.getAttribute("data-preco"));
-
-                    
-                    const item = document.createElement("li");
-                    item.textContent = `${nome} - R$ ${preco.toFixed(2)}`;
-                    listaCarrinho.appendChild(item);
-
-                   
-                    total += preco;
-                    totalElemento.textContent = total.toFixed(2);
-                });
-            });
-
-            
-            botaoLimpar.addEventListener("click", () => {
-                listaCarrinho.innerHTML = "";
-                total = 0;
-                totalElemento.textContent = "0.00";
-            });
-
-            
-            botaoFinalizarCompra.addEventListener("click", () => {
-                if (total > 0) {
-                    alert(`Compra finalizada! Total a pagar: R$ ${total.toFixed(2)}`);
-                    listaCarrinho.innerHTML = "";
-                    total = 0;
-                    totalElemento.textContent = "0.00";
-                } else {
-                    alert("Seu carrinho está vazio. Adicione itens para finalizar a compra.");
-                }
-            });
-        });
-    </script>
+    <div id="carrinho-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Carrinho de Compras</h2>
+            <div id="carrinho-vazio" style="text-align: center; padding: 20px;">
+                Seu carrinho está vazio
+            </div>
+            <ul id="lista-carrinho" style="display: none;"></ul>
+            <div class="total-container" style="display: none;">
+                Total: R$ <span id="total">0.00</span>
+            </div>
+            <div class="carrinho-botoes" style="display: none;">
+                <button id="limpar-carrinho">Limpar Carrinho</button> 
+                <button id="finalizar-compra">Finalizar Compras</button>
+            </div>
+        </div>
+    </div>
 
     <footer>
         <p>&copy; 2025 Lojinha Geek - Criado com carinho por Elizabete e Maria Clara. Todos os direitos reservados.</p>
         <p>Desenvolvido especialmente para fãs de mangás e animes. Obrigado por apoiar nossa loja!</p>
     </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Elementos do DOM
+            const carrinhoIcon = document.getElementById("carrinho-icon");
+            const carrinhoModal = document.getElementById("carrinho-modal");
+            const closeModal = document.querySelector(".close");
+            const botoesAdicionar = document.querySelectorAll(".adicionar");
+            const listaCarrinho = document.getElementById("lista-carrinho");
+            const totalElemento = document.getElementById("total");
+            const botaoLimpar = document.getElementById("limpar-carrinho");
+            const botaoFinalizarCompra = document.getElementById("finalizar-compra");
+            const contadorCarrinho = document.getElementById("contador-carrinho");
+            const carrinhoVazio = document.getElementById("carrinho-vazio");
+            const carrinhoTotal = document.getElementById("carrinho-total");
+            
+            // Variáveis do carrinho
+            let carrinho = [];
+            let total = 0;
+            
+            // Abrir modal do carrinho
+            carrinhoIcon.addEventListener("click", () => {
+                carrinhoModal.style.display = "block";
+            });
+            
+            // Fechar modal do carrinho
+            closeModal.addEventListener("click", () => {
+                carrinhoModal.style.display = "none";
+            });
+            
+            // Fechar modal ao clicar fora
+            window.addEventListener("click", (event) => {
+                if (event.target === carrinhoModal) {
+                    carrinhoModal.style.display = "none";
+                }
+            });
+            
+            // Adicionar item ao carrinho
+            botoesAdicionar.forEach(botao => {
+                botao.addEventListener("click", () => {
+                    const nome = botao.getAttribute("data-nome");
+                    const preco = parseFloat(botao.getAttribute("data-preco"));
+                    
+                    // Adiciona item ao array do carrinho
+                    carrinho.push({ nome, preco });
+                    
+                    // Atualiza total
+                    total += preco;
+                    
+                    // Atualiza contador do carrinho
+                    contadorCarrinho.textContent = carrinho.length;
+                    
+                    // Atualiza exibição do carrinho
+                    atualizarCarrinho();
+                    
+                    // Feedback visual
+                    botao.textContent = "✔ Adicionado";
+                    setTimeout(() => {
+                        botao.textContent = "Adicionar ao carrinho";
+                    }, 1000);
+                });
+            });
+            
+            // Atualizar exibição do carrinho
+            function atualizarCarrinho() {
+                // Limpa lista
+                listaCarrinho.innerHTML = "";
+                
+                // Adiciona itens
+                carrinho.forEach((item, index) => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `
+                        <span>${item.nome} - R$ ${item.preco.toFixed(2)}</span>
+                        <button class="remover-item" data-index="${index}">×</button>
+                    `;
+                    listaCarrinho.appendChild(li);
+                });
+                
+                // Atualiza total
+                totalElemento.textContent = total.toFixed(2);
+                
+                // Mostra/oculta mensagem de carrinho vazio e seção total
+                if (carrinho.length === 0) {
+                    carrinhoVazio.style.display = "block";
+                    carrinhoTotal.style.display = "none";
+                } else {
+                    carrinhoVazio.style.display = "none";
+                    carrinhoTotal.style.display = "block";
+                }
+                
+                // Adiciona eventos aos botões de remover
+                document.querySelectorAll(".remover-item").forEach(botao => {
+                    botao.addEventListener("click", (e) => {
+                        const index = parseInt(e.target.getAttribute("data-index"));
+                        total -= carrinho[index].preco;
+                        carrinho.splice(index, 1);
+                        contadorCarrinho.textContent = carrinho.length;
+                        atualizarCarrinho();
+                    });
+                });
+            }
+            
+            // Limpar carrinho
+            botaoLimpar.addEventListener("click", () => {
+                carrinho = [];
+                total = 0;
+                contadorCarrinho.textContent = "0";
+                atualizarCarrinho();
+            });
+            
+            // Finalizar compra
+            botaoFinalizarCompra.addEventListener("click", () => {
+                if (carrinho.length > 0) {
+                    alert(`Compra finalizada! Total: R$ ${total.toFixed(2)}\nObrigado por comprar conosco!`);
+                    carrinho = [];
+                    total = 0;
+                    contadorCarrinho.textContent = "0";
+                    atualizarCarrinho();
+                    carrinhoModal.style.display = "none";
+                }
+            });
+        });
+    </script>
 </body>
 </html>
